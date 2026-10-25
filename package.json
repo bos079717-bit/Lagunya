@@ -1,0 +1,36 @@
+const express = require('express');
+const cors = require('cors');
+const ytdlp = require('yt-dlp-exec');
+const app = express();
+app.use(cors());
+
+app.get('/', (req, res) => res.send('DAPUR HIDUP'));
+
+app.get('/api/search', async (req, res) => {
+  try {
+    const q = req.query.q || 'for revenge';
+    const out = await ytdlp(`ytsearch1:${q}`, {
+      dumpSingleJson: true,
+      noCheckCertificates: true,
+      noWarnings: true,
+      preferFreeFormats: true,
+    });
+    const v = out.entries ? out.entries[0] : out;
+    res.json({ title: v.title, id: v.id, thumbnail: v.thumbnail, duration: v.duration });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/play', async (req, res) => {
+  try {
+    const id = req.query.id;
+    const out = await ytdlp(`https://www.youtube.com/watch?v=${id}`, {
+      dumpSingleJson: true,
+      format: 'bestaudio[ext=m4a]/bestaudio/best',
+      noCheckCertificates: true,
+    });
+    res.json({ audio: out.url, title: out.title });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log('Jalan di ' + PORT));
